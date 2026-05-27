@@ -11,6 +11,7 @@ It resolves partition metadata for lettered and unlettered volumes (including re
 ## Repository Layout
 
 - src/Get-VolumeInventory.ps1: Main script
+- scripts/Install-Get-VolumeInventory.ps1: Installer to copy main script into cmd folder
 - tests/Get-VolumeInventory.Tests.ps1: Basic parser and contract checks
 - docs/CHANGELOG.md: Project changelog
 - .github/workflows/ci.yml: GitHub Actions CI
@@ -43,6 +44,14 @@ Return objects for piping:
 
 powershell -ExecutionPolicy Bypass -File .\src\Get-VolumeInventory.ps1 -PassThru
 
+Install script into D:\OneDrive\cmd:
+
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Get-VolumeInventory.ps1
+
+Install script into a custom cmd folder:
+
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-Get-VolumeInventory.ps1 -TargetCmdDir D:\Custom\cmd
+
 ## Development
 
 Parser check:
@@ -58,3 +67,4 @@ powershell -NoProfile -Command "Invoke-Pester -Path .\\tests -Output Detailed"
 - Shadow copy rows are excluded by default.
 - Mapping is serial-based; this enables metadata for unlettered partitions.
 - Non-volume pseudo devices (for example Mup, NamedPipe) can appear in fltmc output.
+- Installer aborts if additional source scripts or module dependency declarations are detected.
