@@ -68,3 +68,9 @@ powershell -NoProfile -Command "Invoke-Pester -Path .\\tests -Output Detailed"
 - Mapping is serial-based; this enables metadata for unlettered partitions.
 - Non-volume pseudo devices (for example Mup, NamedPipe) can appear in fltmc output.
 - Installer aborts if additional source scripts or module dependency declarations are detected.
+- InBCD is displayed as `T` for referenced rows and blank otherwise.
+- Output includes `VolumeLabel` where available.
+- When filesystem cannot be read directly, Linux partition GPT types are shown as `LinuxFS` or `LinuxSwap` where detectable.
+- Linux GPT partitions without NT volume objects are included as synthetic rows (`DiskX-PartY`).
+- Default table headings are compact: `Drive`, `Device\`, `Disk #`, `Partition #`.
+- `Role` highlights recognizable categories (`Reco`, `EFI`, `LinuxFS`, `LinuxSwap`).

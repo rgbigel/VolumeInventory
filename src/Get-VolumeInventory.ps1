@@ -1,5 +1,5 @@
 # File:       Get-VolumeInventory.ps1
-# Version:    1.0.0
+# Version:    1.3.0
 # Author:     Rolf
 # Created:    2026-05-27
 # Updated:    2026-05-27
@@ -19,9 +19,16 @@
 # Outputs:
 #   Default: formatted table to host.
 #   PassThru: array of PSCustomObject with columns:
-#             InBCD, DosName, VolumeName, FileSystem, SizeGB, PartitionType,
-#             GptType, MbrType, DiskNumber, PartitionNumber, IsRecovery.
+#             InBCD, DosName, VolumeName, VolumeLabel, FileSystem, SizeGB,
+#             PartitionType, GptType, MbrType, DiskNumber, PartitionNumber, Role.
 # Changelog:
+#   1.3.0 - Added Role column (Reco/EFI/LinuxFS/LinuxSwap).
+#           Compact default table headings: Drive, Device\, Disk #, Partition #.
+#           Default table now shortens device values by dropping '\Device\' prefix.
+#   1.2.0 - InBCD display normalized to "T" or blank.
+#           Added VolumeLabel output column.
+#           Removed IsRecovery output column.
+#           Added deterministic LinuxFS/LinuxSwap filesystem hints from partition GPT type.
 #   1.0.0 - Initial version.
 
 param(
@@ -46,6 +53,41 @@ function Get-VolumeSerialHex {
     }
 
     return $null
+}
+
+function Get-VolumeFsInfo {
+    param([string]$Path)
+
+    $result = [PSCustomObject]@{
+        SerialHex      = $null
+        VolumeLabel    = $null
+        FileSystemName = $null
+    }
+
+    try {
+        $text = fsutil fsinfo volumeinfo $Path 2>$null | Out-String
+        if ($text -match '(?im)^\s*Volume Serial Number\s*:\s*0x([0-9a-f]+)\s*$') {
+            $result.SerialHex = $matches[1].ToLower()
+        }
+
+        if ($text -match '(?im)^[ \t]*Volume Name[ \t]*:[ \t]*(.*)$') {
+            $label = $matches[1].Trim()
+            if (-not [string]::IsNullOrWhiteSpace($label)) {
+                $result.VolumeLabel = $label
+            }
+        }
+
+        if ($text -match '(?im)^[ \t]*File System Name[ \t]*:[ \t]*(.*)$') {
+            $fsName = $matches[1].Trim()
+            if (-not [string]::IsNullOrWhiteSpace($fsName)) {
+                $result.FileSystemName = $fsName
+            }
+        }
+    }
+    catch {
+    }
+
+    return $result
 }
 
 function Get-BcdReferencedNtVolumes {
@@ -110,6 +152,9 @@ function Get-FltmcVolumeRows {
     return @($rows)
 }
 
+$linuxFsGptType = '{0fc63daf-8483-4772-8e79-3d69d8477de4}'
+$linuxSwapGptType = '{0657fd6d-a4ab-43c4-84e5-0933c84b4f4f}'
+$efiSystemGptType = '{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}'
 $recoveryGptType = '{de94bba4-06d1-4d40-a16a-bfd50179d6ac}'
 $bcdVolumes = Get-BcdReferencedNtVolumes
 $partitionMetaBySerial = Get-PartitionMetaBySerial
@@ -134,7 +179,9 @@ $result = foreach ($row in $fltmcRows) {
     }
 
     $globalRootPath = "\\?\GLOBALROOT$($row.VolumeName)"
-    $serial = Get-VolumeSerialHex -Path $globalRootPath
+    $fsInfo = Get-VolumeFsInfo -Path $globalRootPath
+    $serial = $fsInfo.SerialHex
+    $volumeLabel = $fsInfo.VolumeLabel
 
     $meta = $null
     if ($serial -and $partitionMetaBySerial.ContainsKey($serial)) {
@@ -147,34 +194,93 @@ $result = foreach ($row in $fltmcRows) {
     $diskNumber = if ($meta) { $meta.DiskNumber } else { $null }
     $partitionNumber = if ($meta) { $meta.PartitionNumber } else { $null }
 
-    $isRecovery = $false
-    if ($partitionType -eq 'Recovery') {
-        $isRecovery = $true
+    $fileSystem = $row.FileSystem
+    if ([string]::IsNullOrWhiteSpace($fileSystem) -and -not [string]::IsNullOrWhiteSpace($fsInfo.FileSystemName)) {
+        $fileSystem = $fsInfo.FileSystemName
     }
-    elseif ($gptType -and $gptType.ToString().ToLower() -eq $recoveryGptType) {
-        $isRecovery = $true
+
+    if ([string]::IsNullOrWhiteSpace($fileSystem) -and $gptType) {
+        $gptLower = $gptType.ToString().ToLower()
+        if ($gptLower -eq $linuxFsGptType) {
+            $fileSystem = "LinuxFS"
+        }
+        elseif ($gptLower -eq $linuxSwapGptType) {
+            $fileSystem = "LinuxSwap"
+        }
     }
-    elseif ($mbrType -eq 39) {
-        $isRecovery = $true
+
+    $inBcdMarker = if ($bcdVolumes -contains $row.VolumeName) { "T" } else { "" }
+
+    $role = ""
+    $gptLower = if ($gptType) { $gptType.ToString().ToLower() } else { "" }
+    if ($partitionType -eq 'Recovery' -or $gptLower -eq $recoveryGptType -or $mbrType -eq 39) {
+        $role = "Reco"
+    }
+    elseif ($partitionType -eq 'System' -or $gptLower -eq $efiSystemGptType) {
+        $role = "EFI"
+    }
+    elseif ($gptLower -eq $linuxSwapGptType -or $fileSystem -eq 'LinuxSwap') {
+        $role = "LinuxSwap"
+    }
+    elseif ($gptLower -eq $linuxFsGptType -or $fileSystem -eq 'LinuxFS') {
+        $role = "LinuxFS"
     }
 
     [PSCustomObject]@{
-        InBCD           = ($bcdVolumes -contains $row.VolumeName)
+        InBCD           = $inBcdMarker
         DosName         = $row.DosName
         VolumeName      = $row.VolumeName
-        FileSystem      = $row.FileSystem
+        VolumeLabel     = $volumeLabel
+        FileSystem      = $fileSystem
         SizeGB          = $sizeGB
         PartitionType   = $partitionType
         GptType         = $gptType
         MbrType         = $mbrType
         DiskNumber      = $diskNumber
         PartitionNumber = $partitionNumber
-        IsRecovery      = $isRecovery
+        Role            = $role
+    }
+}
+
+$existingDiskPartKeys = @{}
+foreach ($row in $result) {
+    if ($null -ne $row.DiskNumber -and $null -ne $row.PartitionNumber) {
+        $existingDiskPartKeys["$($row.DiskNumber):$($row.PartitionNumber)"] = $true
+    }
+}
+
+$linuxPartitions = Get-Partition | Where-Object {
+    $_.GptType -and @($linuxFsGptType, $linuxSwapGptType) -contains $_.GptType.ToString().ToLower()
+}
+
+foreach ($partition in $linuxPartitions) {
+    $key = "$($partition.DiskNumber):$($partition.PartitionNumber)"
+    if ($existingDiskPartKeys.ContainsKey($key)) { continue }
+
+    $linuxFsHint = if ($partition.GptType.ToString().ToLower() -eq $linuxSwapGptType) { "LinuxSwap" } else { "LinuxFS" }
+    $sizeGB = $null
+    if ($partition.Size) {
+        $sizeGB = [Math]::Round(($partition.Size / 1GB), 2)
+    }
+
+    $result += [PSCustomObject]@{
+        InBCD           = ""
+        DosName         = $null
+        VolumeName      = "Disk$($partition.DiskNumber)-Part$($partition.PartitionNumber)"
+        VolumeLabel     = $null
+        FileSystem      = $linuxFsHint
+        SizeGB          = $sizeGB
+        PartitionType   = $partition.Type
+        GptType         = $partition.GptType
+        MbrType         = $partition.MbrType
+        DiskNumber      = $partition.DiskNumber
+        PartitionNumber = $partition.PartitionNumber
+        Role            = $linuxFsHint
     }
 }
 
 if ($OnlyBcdReferenced) {
-    $result = @($result | Where-Object { $_.InBCD })
+    $result = @($result | Where-Object { $_.InBCD -eq "T" })
 }
 
 if (-not [string]::IsNullOrWhiteSpace($ExportCsvPath)) {
@@ -187,4 +293,19 @@ if ($PassThru) {
 
 $result |
     Sort-Object -Property InBCD, VolumeName -Descending |
-    Format-Table InBCD, DosName, VolumeName, FileSystem, SizeGB, PartitionType, DiskNumber, PartitionNumber, IsRecovery -AutoSize
+    Select-Object -Property @(
+        @{ Name = 'InBCD'; Expression = { $_.InBCD } },
+        @{ Name = 'Drive'; Expression = { $_.DosName } },
+        @{ Name = 'Device\'; Expression = {
+            if ([string]::IsNullOrWhiteSpace($_.VolumeName)) { return $_.VolumeName }
+            return ($_.VolumeName -replace '^\\Device\\', '')
+        } },
+        @{ Name = 'VolumeLabel'; Expression = { $_.VolumeLabel } },
+        @{ Name = 'FileSystem'; Expression = { $_.FileSystem } },
+        @{ Name = 'SizeGB'; Expression = { $_.SizeGB } },
+        @{ Name = 'Role'; Expression = { $_.Role } },
+        @{ Name = 'PartitionType'; Expression = { $_.PartitionType } },
+        @{ Name = 'Disk #'; Expression = { $_.DiskNumber } },
+        @{ Name = 'Partition #'; Expression = { $_.PartitionNumber } }
+    ) |
+    Format-Table -AutoSize
