@@ -1,0 +1,14 @@
+# PowerShell
+*.psd1
+*.psm1
+
+# Output
+out/
+*.csv
+
+# IDE
+.vscode/
+
+# OS
+Thumbs.db
+Desktop.ini
