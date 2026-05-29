@@ -1,5 +1,5 @@
 # File:       VolumeInventory.ps1
-# Version:    2.0.0
+# Version:    2.0.1
 # Author:     Rolf
 # Created:    2026-05-27
 # Updated:    2026-05-29
@@ -22,6 +22,9 @@
 #             InBCD, DosName, VolumeName, VolumeLabel, FileSystem, SizeBytes,
 #             PartitionType, GptType, MbrType, DiskNumber, PartitionNumber, Role.
 # Changelog:
+#   2.0.1 - Device\ values now abbreviate synthetic names:
+#           DiskX-PartY -> DX-PY, DiskX-Unallocated -> DX-UnAl.
+#           Excludes non-volume pseudo devices: Mailslot, Mup, NamedPipe.
 #   2.0.0 - Renamed script/repository naming to VolumeInventory.
 #           Renamed output headings: BCD, Type, Part.#, Size.
 #           Device values now show Vol N instead of HarddiskVolumeN.
@@ -148,9 +151,14 @@ function Get-FltmcVolumeRows {
         Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
         ForEach-Object {
             if ($_ -match '^\s*(?<dos>[A-Z]:)?\s*(?<vol>\\Device\\[^\s]+)\s+(?<fs>\S+)\s*(?<status>\S+)?\s*$') {
+                $volumeName = $matches['vol']
+                if ($volumeName -match '^\\Device\\(Mailslot|Mup|NamedPipe)(\\|$)') {
+                    return
+                }
+
                 [PSCustomObject]@{
                     DosName    = $matches['dos']
-                    VolumeName = $matches['vol']
+                    VolumeName = $volumeName
                     FileSystem = $matches['fs']
                 }
             }
@@ -405,6 +413,12 @@ $result |
             if ([string]::IsNullOrWhiteSpace($_.VolumeName)) { return $_.VolumeName }
             if ($_.VolumeName -match '^\\Device\\HarddiskVolume(\d+)$') {
                 return ("Vol {0}" -f $matches[1])
+            }
+            if ($_.VolumeName -match '^Disk(\d+)-Part(\d+)$') {
+                return ("D{0}-P{1}" -f $matches[1], $matches[2])
+            }
+            if ($_.VolumeName -match '^Disk(\d+)-Unallocated$') {
+                return ("D{0}-UnAl" -f $matches[1])
             }
             return ($_.VolumeName -replace '^\\Device\\', '')
         } },

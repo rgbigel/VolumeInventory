@@ -66,7 +66,7 @@ powershell -NoProfile -Command "Invoke-Pester -Path .\\tests -Output Detailed"
 
 - Shadow copy rows are excluded by default.
 - Mapping is serial-based; this enables metadata for unlettered partitions.
-- Non-volume pseudo devices (for example Mup, NamedPipe) can appear in fltmc output.
+- Non-volume pseudo devices (`Mailslot`, `Mup`, `NamedPipe`) are filtered out from fltmc output.
 - Installer aborts if additional source scripts or module dependency declarations are detected.
 - BCD is displayed as `T` for referenced rows and blank otherwise.
 - Output includes `VolumeLabel` where available.
@@ -74,6 +74,9 @@ powershell -NoProfile -Command "Invoke-Pester -Path .\\tests -Output Detailed"
 - Linux GPT partitions without NT volume objects are included as synthetic rows (`DiskX-PartY`).
 - Default table headings are compact: `Drive`, `Device\`, `Disk #`, `Part.#`.
 - Device values are rendered as `Vol N` for `\Device\HarddiskVolumeN`.
+- Synthetic device values are compacted:
+	- `DiskX-PartY` -> `DX-PY`
+	- `DiskX-Unallocated` -> `DX-UnAl`
 - Size is shown as `MB` (integer) or `GB` (2 decimals with decimal point).
 - Synthetic unallocated rows are included with `Part.#` shown as `-`.
 - `Role` highlights recognizable categories (`Reco`, `EFI`, `LinuxFS`, `LinuxSwap`).

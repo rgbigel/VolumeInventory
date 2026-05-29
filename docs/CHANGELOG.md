@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.0.1 - 2026-05-29
+
+- Device column now abbreviates synthetic values:
+	- `DiskX-PartY` -> `DX-PY`
+	- `DiskX-Unallocated` -> `DX-UnAl`
+- Filtered non-volume pseudo-device rows from `fltmc` output:
+	- `\Device\Mailslot`
+	- `\Device\Mup`
+	- `\Device\NamedPipe`
+
 ## 2.0.0 - 2026-05-29
 
 - Renamed project naming to `VolumeInventory`.
