@@ -12,9 +12,9 @@ Describe 'VolumeInventory script' {
         $paramBlock = $ast.ParamBlock
         $paramNames = @($paramBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
 
-        $paramNames | Should Contain 'IncludeShadowCopy'
-        $paramNames | Should Contain 'OnlyBcdReferenced'
-        $paramNames | Should Contain 'PassThru'
-        $paramNames | Should Contain 'ExportCsvPath'
+        ($paramNames -contains 'IncludeShadowCopy') | Should Be $true
+        ($paramNames -contains 'OnlyBcdReferenced') | Should Be $true
+        ($paramNames -contains 'PassThru') | Should Be $true
+        ($paramNames -contains 'ExportCsvPath') | Should Be $true
     }
 }
