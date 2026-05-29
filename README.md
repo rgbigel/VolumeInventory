@@ -1,4 +1,4 @@
-# Get-VolumeInventory
+# VolumeInventory
 
 Windows PowerShell utility to build a unified volume inventory by combining:
 
@@ -10,9 +10,9 @@ It resolves partition metadata for lettered and unlettered volumes (including re
 
 ## Repository Layout
 
-- src/Get-VolumeInventory.ps1: Main script
-- scripts/Install-Get-VolumeInventory.ps1: Installer to copy main script into cmd folder
-- tests/Get-VolumeInventory.Tests.ps1: Basic parser and contract checks
+- src/VolumeInventory.ps1: Main script
+- scripts/Install-VolumeInventory.ps1: Installer to copy main script into cmd folder
+- tests/VolumeInventory.Tests.ps1: Basic parser and contract checks
 - docs/CHANGELOG.md: Project changelog
 - .github/workflows/ci.yml: GitHub Actions CI
 
@@ -26,37 +26,37 @@ It resolves partition metadata for lettered and unlettered volumes (including re
 
 Run default table output:
 
-powershell -ExecutionPolicy Bypass -File .\src\Get-VolumeInventory.ps1
+powershell -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1
 
 Include shadow copy volumes:
 
-powershell -ExecutionPolicy Bypass -File .\src\Get-VolumeInventory.ps1 -IncludeShadowCopy
+powershell -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1 -IncludeShadowCopy
 
 Show only BCD-referenced volumes:
 
-powershell -ExecutionPolicy Bypass -File .\src\Get-VolumeInventory.ps1 -OnlyBcdReferenced
+powershell -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1 -OnlyBcdReferenced
 
 Export to CSV:
 
-powershell -ExecutionPolicy Bypass -File .\src\Get-VolumeInventory.ps1 -ExportCsvPath .\out\volumes.csv
+powershell -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1 -ExportCsvPath .\out\volumes.csv
 
 Return objects for piping:
 
-powershell -ExecutionPolicy Bypass -File .\src\Get-VolumeInventory.ps1 -PassThru
+powershell -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1 -PassThru
 
 Install script into D:\OneDrive\cmd:
 
-powershell -ExecutionPolicy Bypass -File .\scripts\Install-Get-VolumeInventory.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-VolumeInventory.ps1
 
 Install script into a custom cmd folder:
 
-powershell -ExecutionPolicy Bypass -File .\scripts\Install-Get-VolumeInventory.ps1 -TargetCmdDir D:\Custom\cmd
+powershell -ExecutionPolicy Bypass -File .\scripts\Install-VolumeInventory.ps1 -TargetCmdDir D:\Custom\cmd
 
 ## Development
 
 Parser check:
 
-powershell -NoProfile -Command "$errors = $null; [System.Management.Automation.Language.Parser]::ParseFile('.\\src\\Get-VolumeInventory.ps1', [ref]$null, [ref]$errors) | Out-Null; if ($errors) { $errors | ForEach-Object { $_.Message }; exit 1 }"
+powershell -NoProfile -Command "$errors = $null; [System.Management.Automation.Language.Parser]::ParseFile('.\\src\\VolumeInventory.ps1', [ref]$null, [ref]$errors) | Out-Null; if ($errors) { $errors | ForEach-Object { $_.Message }; exit 1 }"
 
 Pester tests:
 
@@ -68,9 +68,12 @@ powershell -NoProfile -Command "Invoke-Pester -Path .\\tests -Output Detailed"
 - Mapping is serial-based; this enables metadata for unlettered partitions.
 - Non-volume pseudo devices (for example Mup, NamedPipe) can appear in fltmc output.
 - Installer aborts if additional source scripts or module dependency declarations are detected.
-- InBCD is displayed as `T` for referenced rows and blank otherwise.
+- BCD is displayed as `T` for referenced rows and blank otherwise.
 - Output includes `VolumeLabel` where available.
 - When filesystem cannot be read directly, Linux partition GPT types are shown as `LinuxFS` or `LinuxSwap` where detectable.
 - Linux GPT partitions without NT volume objects are included as synthetic rows (`DiskX-PartY`).
-- Default table headings are compact: `Drive`, `Device\`, `Disk #`, `Partition #`.
+- Default table headings are compact: `Drive`, `Device\`, `Disk #`, `Part.#`.
+- Device values are rendered as `Vol N` for `\Device\HarddiskVolumeN`.
+- Size is shown as `MB` (integer) or `GB` (2 decimals with decimal point).
+- Synthetic unallocated rows are included with `Part.#` shown as `-`.
 - `Role` highlights recognizable categories (`Reco`, `EFI`, `LinuxFS`, `LinuxSwap`).

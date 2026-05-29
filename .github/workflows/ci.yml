@@ -21,7 +21,7 @@ jobs:
         shell: pwsh
         run: |
           $errors = $null
-          [System.Management.Automation.Language.Parser]::ParseFile('.\\src\\Get-VolumeInventory.ps1', [ref]$null, [ref]$errors) | Out-Null
+          [System.Management.Automation.Language.Parser]::ParseFile('.\\src\\VolumeInventory.ps1', [ref]$null, [ref]$errors) | Out-Null
           if ($errors -and $errors.Count -gt 0) {
             $errors | ForEach-Object { $_.Message }
             exit 1

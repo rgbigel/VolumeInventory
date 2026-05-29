@@ -1,5 +1,21 @@
 # Changelog
 
+## 2.0.0 - 2026-05-29
+
+- Renamed project naming to `VolumeInventory`.
+- Renamed script to `src/VolumeInventory.ps1`.
+- Renamed installer to `scripts/Install-VolumeInventory.ps1`.
+- Renamed tests to `tests/VolumeInventory.Tests.ps1`.
+- Changed default output headings:
+	- `InBCD` -> `BCD`
+	- `PartitionType` -> `Type`
+	- `Partition #` -> `Part.#`
+	- `SizeGB` -> `Size` (formatted text)
+- Device column now renders `\\Device\\HarddiskVolumeN` as `Vol N`.
+- Default output now sorts by `Disk #` then `Part.#`.
+- Added synthetic unallocated-space rows per disk with `Part.#` shown as `-`.
+- Size output now formats as integer `MB` below 1 GB, otherwise `N2` `GB`.
+
 ## 1.3.0 - 2026-05-27
 
 - Added `Role` column (`Reco`, `EFI`, `LinuxFS`, `LinuxSwap`).
@@ -19,15 +35,15 @@
 
 ## 1.1.0 - 2026-05-27
 
-- Added scripts/Install-Get-VolumeInventory.ps1.
-- Installer copies src/Get-VolumeInventory.ps1 to D:\OneDrive\cmd by default.
+- Added scripts/Install-VolumeInventory.ps1.
+- Installer copies src/VolumeInventory.ps1 to D:\OneDrive\cmd by default.
 - Installer now aborts if source-script count is not exactly one or if module dependency declarations are detected.
 - Updated README with installer usage.
 
 ## 1.0.0 - 2026-05-27
 
 - Initial repository scaffold.
-- Added src/Get-VolumeInventory.ps1.
-- Added tests/Get-VolumeInventory.Tests.ps1.
+- Added src/VolumeInventory.ps1.
+- Added tests/VolumeInventory.Tests.ps1.
 - Added GitHub Actions CI workflow.
 - Added README and project metadata files.

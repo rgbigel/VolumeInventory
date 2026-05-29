@@ -1,22 +1,22 @@
-# File:       Install-Get-VolumeInventory.ps1
-# Version:    1.0.0
+# File:       Install-VolumeInventory.ps1
+# Version:    2.0.0
 # Author:     Rolf
 # Created:    2026-05-27
-# Updated:    2026-05-27
+# Updated:    2026-05-29
 # Purpose:
-#   Installs Get-VolumeInventory.ps1 into a target cmd directory.
+#   Installs VolumeInventory.ps1 into a target cmd directory.
 #
 #   Safety rule requested for project bootstrap:
-#   - Assume exactly one distributable source script (Get-VolumeInventory.ps1).
+#   - Assume exactly one distributable source script (VolumeInventory.ps1).
 #   - Abort if additional source scripts are present or if module dependencies
 #     are declared in the main script.
 # Parameters:
 #   -TargetCmdDir <path>   Optional. Destination directory.
 #                          Default: D:\OneDrive\cmd
 # Outputs:
-#   Copies src\Get-VolumeInventory.ps1 to <TargetCmdDir>\Get-VolumeInventory.ps1.
+#   Copies src\VolumeInventory.ps1 to <TargetCmdDir>\VolumeInventory.ps1.
 # Changelog:
-#   1.0.0 - Initial version.
+#   2.0.0 - Renamed installer and source target to VolumeInventory naming.
 
 param(
     [string]$TargetCmdDir = "D:\OneDrive\cmd"
@@ -37,9 +37,9 @@ if ($srcScripts.Count -ne 1) {
     throw "Install aborted: expected exactly one source .ps1 in '$srcDir', found $($srcScripts.Count)."
 }
 
-$mainScript = $srcScripts | Where-Object { $_.Name -ieq "Get-VolumeInventory.ps1" } | Select-Object -First 1
+$mainScript = $srcScripts | Where-Object { $_.Name -ieq "VolumeInventory.ps1" } | Select-Object -First 1
 if (-not $mainScript) {
-    throw "Install aborted: expected source script 'Get-VolumeInventory.ps1' in '$srcDir'."
+    throw "Install aborted: expected source script 'VolumeInventory.ps1' in '$srcDir'."
 }
 
 $scriptText = Get-Content -LiteralPath $mainScript.FullName -Raw

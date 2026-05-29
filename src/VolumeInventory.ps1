@@ -1,8 +1,8 @@
-# File:       Get-VolumeInventory.ps1
-# Version:    1.3.0
+# File:       VolumeInventory.ps1
+# Version:    2.0.0
 # Author:     Rolf
 # Created:    2026-05-27
-# Updated:    2026-05-27
+# Updated:    2026-05-29
 # Purpose:
 #   Builds a unified volume inventory by combining:
 #   - fltmc volumes (NT device names like \Device\HarddiskVolumeN)
@@ -19,9 +19,15 @@
 # Outputs:
 #   Default: formatted table to host.
 #   PassThru: array of PSCustomObject with columns:
-#             InBCD, DosName, VolumeName, VolumeLabel, FileSystem, SizeGB,
+#             InBCD, DosName, VolumeName, VolumeLabel, FileSystem, SizeBytes,
 #             PartitionType, GptType, MbrType, DiskNumber, PartitionNumber, Role.
 # Changelog:
+#   2.0.0 - Renamed script/repository naming to VolumeInventory.
+#           Renamed output headings: BCD, Type, Part.#, Size.
+#           Device values now show Vol N instead of HarddiskVolumeN.
+#           Default sort changed to Disk # then Part.#.
+#           Added synthetic unallocated rows with Part.# shown as '-'.
+#           Size column now renders as MB (integer) or GB (2 decimals).
 #   1.3.0 - Added Role column (Reco/EFI/LinuxFS/LinuxSwap).
 #           Compact default table headings: Drive, Device\, Disk #, Partition #.
 #           Default table now shortens device values by dropping '\Device\' prefix.
@@ -127,6 +133,7 @@ function Get-PartitionMetaBySerial {
                     MbrType         = $partition.MbrType
                     DiskNumber      = $partition.DiskNumber
                     PartitionNumber = $partition.PartitionNumber
+                    SizeBytes       = $partition.Size
                 }
             }
         }
@@ -152,6 +159,92 @@ function Get-FltmcVolumeRows {
     return @($rows)
 }
 
+function Format-SizeText {
+    param([Nullable[Int64]]$SizeBytes)
+
+    if ($null -eq $SizeBytes -or $SizeBytes -le 0) {
+        return ""
+    }
+
+    if ($SizeBytes -lt 1GB) {
+        $mb = [Math]::Round(($SizeBytes / 1MB), 0)
+        return ("{0} MB" -f [int64]$mb)
+    }
+
+    return ("{0:N2} GB" -f ($SizeBytes / 1GB))
+}
+
+function Get-UnallocatedRows {
+    $rows = @()
+    $disks = @(Get-Disk)
+    if (-not $disks -or $disks.Count -eq 0) {
+        return $rows
+    }
+
+    $allPartitions = @(Get-Partition)
+    foreach ($disk in $disks) {
+        $diskNumber = $disk.Number
+        $diskSize = [int64]$disk.Size
+        $partitions = @(
+            $allPartitions |
+                Where-Object { $_.DiskNumber -eq $diskNumber } |
+                Sort-Object -Property Offset
+        )
+
+        $cursor = [int64]0
+        foreach ($partition in $partitions) {
+            $start = [int64]$partition.Offset
+            $partSize = [int64]$partition.Size
+            if ($start -gt $cursor) {
+                $gap = $start - $cursor
+                if ($gap -gt 0) {
+                    $rows += [PSCustomObject]@{
+                        InBCD           = ""
+                        DosName         = $null
+                        VolumeName      = "Disk$diskNumber-Unallocated"
+                        VolumeLabel     = $null
+                        FileSystem      = ""
+                        SizeBytes       = $gap
+                        PartitionType   = "Unallocated"
+                        GptType         = $null
+                        MbrType         = $null
+                        DiskNumber      = $diskNumber
+                        PartitionNumber = $null
+                        Role            = "Unalloc"
+                    }
+                }
+            }
+
+            $end = $start + $partSize
+            if ($end -gt $cursor) {
+                $cursor = $end
+            }
+        }
+
+        if ($diskSize -gt $cursor) {
+            $tail = $diskSize - $cursor
+            if ($tail -gt 0) {
+                $rows += [PSCustomObject]@{
+                    InBCD           = ""
+                    DosName         = $null
+                    VolumeName      = "Disk$diskNumber-Unallocated"
+                    VolumeLabel     = $null
+                    FileSystem      = ""
+                    SizeBytes       = $tail
+                    PartitionType   = "Unallocated"
+                    GptType         = $null
+                    MbrType         = $null
+                    DiskNumber      = $diskNumber
+                    PartitionNumber = $null
+                    Role            = "Unalloc"
+                }
+            }
+        }
+    }
+
+    return $rows
+}
+
 $linuxFsGptType = '{0fc63daf-8483-4772-8e79-3d69d8477de4}'
 $linuxSwapGptType = '{0657fd6d-a4ab-43c4-84e5-0933c84b4f4f}'
 $efiSystemGptType = '{c12a7328-f81f-11d2-ba4b-00a0c93ec93b}'
@@ -165,13 +258,13 @@ if (-not $IncludeShadowCopy) {
 }
 
 $result = foreach ($row in $fltmcRows) {
-    $sizeGB = $null
+    $sizeBytes = $null
     if ($row.DosName) {
         $drive = $row.DosName.TrimEnd(':')
         try {
             $volume = Get-Volume -DriveLetter $drive -ErrorAction Stop
             if ($volume.Size) {
-                $sizeGB = [Math]::Round(($volume.Size / 1GB), 2)
+                $sizeBytes = [int64]$volume.Size
             }
         }
         catch {
@@ -193,6 +286,9 @@ $result = foreach ($row in $fltmcRows) {
     $mbrType = if ($meta) { $meta.MbrType } else { $null }
     $diskNumber = if ($meta) { $meta.DiskNumber } else { $null }
     $partitionNumber = if ($meta) { $meta.PartitionNumber } else { $null }
+    if ($null -eq $sizeBytes -and $meta -and $meta.SizeBytes) {
+        $sizeBytes = [int64]$meta.SizeBytes
+    }
 
     $fileSystem = $row.FileSystem
     if ([string]::IsNullOrWhiteSpace($fileSystem) -and -not [string]::IsNullOrWhiteSpace($fsInfo.FileSystemName)) {
@@ -232,7 +328,7 @@ $result = foreach ($row in $fltmcRows) {
         VolumeName      = $row.VolumeName
         VolumeLabel     = $volumeLabel
         FileSystem      = $fileSystem
-        SizeGB          = $sizeGB
+        SizeBytes       = $sizeBytes
         PartitionType   = $partitionType
         GptType         = $gptType
         MbrType         = $mbrType
@@ -258,9 +354,9 @@ foreach ($partition in $linuxPartitions) {
     if ($existingDiskPartKeys.ContainsKey($key)) { continue }
 
     $linuxFsHint = if ($partition.GptType.ToString().ToLower() -eq $linuxSwapGptType) { "LinuxSwap" } else { "LinuxFS" }
-    $sizeGB = $null
+    $sizeBytes = $null
     if ($partition.Size) {
-        $sizeGB = [Math]::Round(($partition.Size / 1GB), 2)
+        $sizeBytes = [int64]$partition.Size
     }
 
     $result += [PSCustomObject]@{
@@ -269,7 +365,7 @@ foreach ($partition in $linuxPartitions) {
         VolumeName      = "Disk$($partition.DiskNumber)-Part$($partition.PartitionNumber)"
         VolumeLabel     = $null
         FileSystem      = $linuxFsHint
-        SizeGB          = $sizeGB
+        SizeBytes       = $sizeBytes
         PartitionType   = $partition.Type
         GptType         = $partition.GptType
         MbrType         = $partition.MbrType
@@ -277,6 +373,11 @@ foreach ($partition in $linuxPartitions) {
         PartitionNumber = $partition.PartitionNumber
         Role            = $linuxFsHint
     }
+}
+
+$unallocatedRows = Get-UnallocatedRows
+if ($unallocatedRows -and $unallocatedRows.Count -gt 0) {
+    $result += $unallocatedRows
 }
 
 if ($OnlyBcdReferenced) {
@@ -292,20 +393,27 @@ if ($PassThru) {
 }
 
 $result |
-    Sort-Object -Property InBCD, VolumeName -Descending |
+    Sort-Object -Property @(
+        @{ Expression = { if ($null -eq $_.DiskNumber) { [int]::MaxValue } else { [int]$_.DiskNumber } }; Descending = $false },
+        @{ Expression = { if ($null -eq $_.PartitionNumber) { [int]::MaxValue } else { [int]$_.PartitionNumber } }; Descending = $false },
+        @{ Expression = { $_.VolumeName }; Descending = $false }
+    ) |
     Select-Object -Property @(
-        @{ Name = 'InBCD'; Expression = { $_.InBCD } },
+        @{ Name = 'BCD'; Expression = { $_.InBCD } },
         @{ Name = 'Drive'; Expression = { $_.DosName } },
         @{ Name = 'Device\'; Expression = {
             if ([string]::IsNullOrWhiteSpace($_.VolumeName)) { return $_.VolumeName }
+            if ($_.VolumeName -match '^\\Device\\HarddiskVolume(\d+)$') {
+                return ("Vol {0}" -f $matches[1])
+            }
             return ($_.VolumeName -replace '^\\Device\\', '')
         } },
         @{ Name = 'VolumeLabel'; Expression = { $_.VolumeLabel } },
         @{ Name = 'FileSystem'; Expression = { $_.FileSystem } },
-        @{ Name = 'SizeGB'; Expression = { $_.SizeGB } },
+        @{ Name = 'Size'; Expression = { Format-SizeText -SizeBytes $_.SizeBytes } },
         @{ Name = 'Role'; Expression = { $_.Role } },
-        @{ Name = 'PartitionType'; Expression = { $_.PartitionType } },
+        @{ Name = 'Type'; Expression = { $_.PartitionType } },
         @{ Name = 'Disk #'; Expression = { $_.DiskNumber } },
-        @{ Name = 'Partition #'; Expression = { $_.PartitionNumber } }
+        @{ Name = 'Part.#'; Expression = { if ($null -eq $_.PartitionNumber) { '-' } else { $_.PartitionNumber } } }
     ) |
     Format-Table -AutoSize
