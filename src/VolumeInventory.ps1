@@ -40,12 +40,33 @@
 #           Added deterministic LinuxFS/LinuxSwap filesystem hints from partition GPT type.
 #   1.0.0 - Initial version.
 
+<#
+.SYNOPSIS
+    Builds a unified inventory of Windows volumes and partition metadata.
+
+.DESCRIPTION
+    Correlates fltmc, partition, and BCD data to present consolidated volume
+    rows and optional CSV output.
+
+.PARAMETER HelpMode
+    Shows full help and exits.
+    Aliases: h, ?
+#>
+
+[CmdletBinding()]
 param(
     [switch]$IncludeShadowCopy,
     [switch]$OnlyBcdReferenced,
     [switch]$PassThru,
-    [string]$ExportCsvPath
+    [string]$ExportCsvPath,
+    [Alias("h","?")]
+    [switch]$HelpMode
 )
+
+if ($HelpMode) {
+    Get-Help $PSCommandPath -Full
+    exit 0
+}
 
 $ErrorActionPreference = "Stop"
 

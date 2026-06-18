@@ -18,9 +18,17 @@
 # Changelog:
 #   2.0.0 - Renamed installer and source target to VolumeInventory naming.
 
+[CmdletBinding()]
 param(
-    [string]$TargetCmdDir = "D:\OneDrive\cmd"
+    [string]$TargetCmdDir = "D:\OneDrive\cmd",
+    [Alias("h","?")]
+    [switch]$HelpMode
 )
+
+if ($HelpMode) {
+    Get-Help $PSCommandPath -Full
+    exit 0
+}
 
 $ErrorActionPreference = "Stop"
 
