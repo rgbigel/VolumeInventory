@@ -1,8 +1,8 @@
 # File:       VolumeInventory.ps1
-# Version:    2.0.1
+# Version:    2.0.2
 # Author:     Rolf
 # Created:    2026-05-27
-# Updated:    2026-05-29
+# Updated:    2026-07-01
 # Purpose:
 #   Builds a unified volume inventory by combining:
 #   - fltmc volumes (NT device names like \Device\HarddiskVolumeN)
@@ -22,6 +22,9 @@
 #             InBCD, DosName, VolumeName, VolumeLabel, FileSystem, SizeBytes,
 #             PartitionType, GptType, MbrType, DiskNumber, PartitionNumber, Role.
 # Changelog:
+#   2.0.2 - Final ordering now follows physical disk sequence by start offset,
+#           so allocated partitions and synthetic unallocated ranges are interleaved
+#           exactly as they appear on disk.
 #   2.0.1 - Device\ values now abbreviate synthetic names:
 #           DiskX-PartY -> DX-PY, DiskX-Unallocated -> DX-UnAl.
 #           Excludes non-volume pseudo devices: Mailslot, Mup, NamedPipe.
@@ -157,6 +160,7 @@ function Get-PartitionMetaBySerial {
                     MbrType         = $partition.MbrType
                     DiskNumber      = $partition.DiskNumber
                     PartitionNumber = $partition.PartitionNumber
+                    StartOffset     = [int64]$partition.Offset
                     SizeBytes       = $partition.Size
                 }
             }
@@ -233,6 +237,7 @@ function Get-UnallocatedRows {
                         VolumeName      = "Disk$diskNumber-Unallocated"
                         VolumeLabel     = $null
                         FileSystem      = ""
+                        StartOffset     = $cursor
                         SizeBytes       = $gap
                         PartitionType   = "Unallocated"
                         GptType         = $null
@@ -259,6 +264,7 @@ function Get-UnallocatedRows {
                     VolumeName      = "Disk$diskNumber-Unallocated"
                     VolumeLabel     = $null
                     FileSystem      = ""
+                    StartOffset     = $cursor
                     SizeBytes       = $tail
                     PartitionType   = "Unallocated"
                     GptType         = $null
@@ -315,6 +321,7 @@ $result = foreach ($row in $fltmcRows) {
     $mbrType = if ($meta) { $meta.MbrType } else { $null }
     $diskNumber = if ($meta) { $meta.DiskNumber } else { $null }
     $partitionNumber = if ($meta) { $meta.PartitionNumber } else { $null }
+    $startOffset = if ($meta) { $meta.StartOffset } else { $null }
     if ($null -eq $sizeBytes -and $meta -and $meta.SizeBytes) {
         $sizeBytes = [int64]$meta.SizeBytes
     }
@@ -357,6 +364,7 @@ $result = foreach ($row in $fltmcRows) {
         VolumeName      = $row.VolumeName
         VolumeLabel     = $volumeLabel
         FileSystem      = $fileSystem
+        StartOffset     = $startOffset
         SizeBytes       = $sizeBytes
         PartitionType   = $partitionType
         GptType         = $gptType
@@ -394,6 +402,7 @@ foreach ($partition in $linuxPartitions) {
         VolumeName      = "Disk$($partition.DiskNumber)-Part$($partition.PartitionNumber)"
         VolumeLabel     = $null
         FileSystem      = $linuxFsHint
+        StartOffset     = [int64]$partition.Offset
         SizeBytes       = $sizeBytes
         PartitionType   = $partition.Type
         GptType         = $partition.GptType
@@ -417,16 +426,37 @@ if (-not [string]::IsNullOrWhiteSpace($ExportCsvPath)) {
     $result | Export-Csv -Path $ExportCsvPath -NoTypeInformation -Encoding UTF8
 }
 
+$sortedResult = @(
+    $result |
+        Sort-Object -Property @(
+            @{ Expression = { if ($null -eq $_.DiskNumber) { [int]::MaxValue } else { [int]$_.DiskNumber } }; Descending = $false },
+            @{ Expression = { if ($null -eq $_.StartOffset) { [int64]::MaxValue } else { [int64]$_.StartOffset } }; Descending = $false },
+            @{ Expression = { if ($null -eq $_.PartitionNumber) { [int]::MaxValue } else { [int]$_.PartitionNumber } }; Descending = $false },
+            @{ Expression = { $_.VolumeName }; Descending = $false }
+        )
+)
+
 if ($PassThru) {
-    return $result
+    return @(
+        $sortedResult |
+            Select-Object -Property @(
+                'InBCD',
+                'DosName',
+                'VolumeName',
+                'VolumeLabel',
+                'FileSystem',
+                'SizeBytes',
+                'PartitionType',
+                'GptType',
+                'MbrType',
+                'DiskNumber',
+                'PartitionNumber',
+                'Role'
+            )
+    )
 }
 
-$result |
-    Sort-Object -Property @(
-        @{ Expression = { if ($null -eq $_.DiskNumber) { [int]::MaxValue } else { [int]$_.DiskNumber } }; Descending = $false },
-        @{ Expression = { if ($null -eq $_.PartitionNumber) { [int]::MaxValue } else { [int]$_.PartitionNumber } }; Descending = $false },
-        @{ Expression = { $_.VolumeName }; Descending = $false }
-    ) |
+$sortedResult |
     Select-Object -Property @(
         @{ Name = 'BCD'; Expression = { $_.InBCD } },
         @{ Name = 'Drive'; Expression = { $_.DosName } },
