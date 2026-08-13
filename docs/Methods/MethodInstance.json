@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "module": "MethodInstance.json",
+    "path": "docs/Methods/MethodInstance.json",
+    "version": "1.0.0",
+    "config_type": "target-local-method-instance",
+    "generated_by": "Initialize-RealRepoMethodInstance.ps1",
+    "generated_by_version": "1.0.0",
+    "generated_at": "2026-08-02T18:13:27+02:00"
+  },
+  "repository": {
+    "path": "D:\\Git_Repositories\\VolumeInventory",
+    "selected_by_workspace_gc": true
+  },
+  "method_instance": {
+    "canonical_root": "Docs/Methods",
+    "physical_root": "docs/Methods",
+    "dry_run_root": "docs/Methods/DryRun",
+    "log_root": "docs/Methods/Logs",
+    "result_root": "docs/Methods/Results",
+    "proposal_root": "docs/Methods/Proposals",
+    "proposal_review_format": "md",
+    "structural_override": true,
+    "auto_accepted_for_candidate_repo": true
+  },
+  "ownership": {
+    "target_repo_owns_dry_run_results": true,
+    "target_repo_owns_work_logs": true,
+    "target_repo_owns_repo_proposals": true,
+    "workspace_gc_role": "method-baseline-only"
+  },
+  "constraints": {
+    "bootstrap_does_not_stage_or_commit": true,
+    "bootstrap_does_not_modify_workspace_gc_state": true,
+    "proposals_directory_is_working_review_queue": true,
+    "accepted_implemented_proposals_are_void": true
+  }
+}

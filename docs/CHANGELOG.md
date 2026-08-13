@@ -1,5 +1,18 @@
 # Changelog
 
+Project: VolumeInventory
+Version: 2.5.0
+
+## 2.5.0 - 2026-08-13
+
+- Added `[CmdletBinding()]` and explicit `param()` blocks to helper functions for Workspace_GC PowerShell structure conformance.
+- Added test coverage that requires helper functions to remain advanced and self-contained.
+- Aligned script, installer, test, and documentation headers for method-clean release pending test.
+
+## 2.0.2 - 2026-07-01
+
+- Final ordering now follows physical disk sequence by start offset, so allocated partitions and synthetic unallocated ranges are interleaved exactly as they appear on disk.
+
 ## 2.0.1 - 2026-05-29
 
 - Device column now abbreviates synthetic values:

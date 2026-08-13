@@ -1,8 +1,18 @@
+[CmdletBinding()]
+param(
+    [switch]$IncludeShadowCopy,
+    [switch]$OnlyBcdReferenced,
+    [switch]$PassThru,
+    [string]$ExportCsvPath,
+    [Alias("h","?")]
+    [switch]$HelpMode
+)
+
 # File:       VolumeInventory.ps1
-# Version:    2.0.2
+# Version:    2.5.0
 # Author:     Rolf
 # Created:    2026-05-27
-# Updated:    2026-07-01
+# Updated:    2026-08-13
 # Purpose:
 #   Builds a unified volume inventory by combining:
 #   - fltmc volumes (NT device names like \Device\HarddiskVolumeN)
@@ -22,6 +32,8 @@
 #             InBCD, DosName, VolumeName, VolumeLabel, FileSystem, SizeBytes,
 #             PartitionType, GptType, MbrType, DiskNumber, PartitionNumber, Role.
 # Changelog:
+#   2.5.0 - Marked method-clean release pending test and aligned helper function
+#           structure with Workspace_GC PowerShell lifecycle methodology.
 #   2.0.2 - Final ordering now follows physical disk sequence by start offset,
 #           so allocated partitions and synthetic unallocated ranges are interleaved
 #           exactly as they appear on disk.
@@ -56,16 +68,6 @@
     Aliases: h, ?
 #>
 
-[CmdletBinding()]
-param(
-    [switch]$IncludeShadowCopy,
-    [switch]$OnlyBcdReferenced,
-    [switch]$PassThru,
-    [string]$ExportCsvPath,
-    [Alias("h","?")]
-    [switch]$HelpMode
-)
-
 if ($HelpMode) {
     Get-Help $PSCommandPath -Full
     exit 0
@@ -74,6 +76,7 @@ if ($HelpMode) {
 $ErrorActionPreference = "Stop"
 
 function Get-VolumeSerialHex {
+    [CmdletBinding()]
     param([string]$Path)
 
     try {
@@ -89,6 +92,7 @@ function Get-VolumeSerialHex {
 }
 
 function Get-VolumeFsInfo {
+    [CmdletBinding()]
     param([string]$Path)
 
     $result = [PSCustomObject]@{
@@ -124,6 +128,9 @@ function Get-VolumeFsInfo {
 }
 
 function Get-BcdReferencedNtVolumes {
+    [CmdletBinding()]
+    param()
+
     $bcdEdit = Join-Path $env:WINDIR "System32\bcdedit.exe"
     $all = & $bcdEdit /enum all /v 2>&1 | Out-String
     if ($LASTEXITCODE -ne 0) {
@@ -143,6 +150,9 @@ function Get-BcdReferencedNtVolumes {
 }
 
 function Get-PartitionMetaBySerial {
+    [CmdletBinding()]
+    param()
+
     $map = @{}
 
     Get-Partition | ForEach-Object {
@@ -171,6 +181,9 @@ function Get-PartitionMetaBySerial {
 }
 
 function Get-FltmcVolumeRows {
+    [CmdletBinding()]
+    param()
+
     $rows = fltmc volumes |
         Select-Object -Skip 2 |
         Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
@@ -193,6 +206,7 @@ function Get-FltmcVolumeRows {
 }
 
 function Format-SizeText {
+    [CmdletBinding()]
     param([Nullable[Int64]]$SizeBytes)
 
     if ($null -eq $SizeBytes -or $SizeBytes -le 0) {
@@ -208,6 +222,9 @@ function Format-SizeText {
 }
 
 function Get-UnallocatedRows {
+    [CmdletBinding()]
+    param()
+
     $rows = @()
     $disks = @(Get-Disk)
     if (-not $disks -or $disks.Count -eq 0) {

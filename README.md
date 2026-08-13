@@ -1,6 +1,8 @@
 # VolumeInventory
 
-Windows PowerShell utility to build a unified volume inventory by combining:
+Version: 2.5.0
+
+Windows volume inventory utility written in PowerShell, with documented commands run through `pwsh`, by combining:
 
 - fltmc volumes
 - Get-Partition
@@ -19,48 +21,66 @@ It resolves partition metadata for lettered and unlettered volumes (including re
 ## Requirements
 
 - Windows
-- PowerShell 5.1 or PowerShell 7+
+- `pwsh` for documented commands and validation
 - Administrative shell recommended (for complete device visibility)
 
 ## Usage
 
 Run default table output:
 
-powershell -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1
+```pwsh
+pwsh -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1
+```
 
 Include shadow copy volumes:
 
-powershell -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1 -IncludeShadowCopy
+```pwsh
+pwsh -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1 -IncludeShadowCopy
+```
 
 Show only BCD-referenced volumes:
 
-powershell -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1 -OnlyBcdReferenced
+```pwsh
+pwsh -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1 -OnlyBcdReferenced
+```
 
 Export to CSV:
 
-powershell -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1 -ExportCsvPath .\out\volumes.csv
+```pwsh
+pwsh -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1 -ExportCsvPath .\out\volumes.csv
+```
 
 Return objects for piping:
 
-powershell -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1 -PassThru
+```pwsh
+pwsh -ExecutionPolicy Bypass -File .\src\VolumeInventory.ps1 -PassThru
+```
 
 Install script into D:\OneDrive\cmd:
 
-powershell -ExecutionPolicy Bypass -File .\scripts\Install-VolumeInventory.ps1
+```pwsh
+pwsh -ExecutionPolicy Bypass -File .\scripts\Install-VolumeInventory.ps1
+```
 
 Install script into a custom cmd folder:
 
-powershell -ExecutionPolicy Bypass -File .\scripts\Install-VolumeInventory.ps1 -TargetCmdDir D:\Custom\cmd
+```pwsh
+pwsh -ExecutionPolicy Bypass -File .\scripts\Install-VolumeInventory.ps1 -TargetCmdDir D:\Custom\cmd
+```
 
 ## Development
 
 Parser check:
 
-powershell -NoProfile -Command "$errors = $null; [System.Management.Automation.Language.Parser]::ParseFile('.\\src\\VolumeInventory.ps1', [ref]$null, [ref]$errors) | Out-Null; if ($errors) { $errors | ForEach-Object { $_.Message }; exit 1 }"
+```pwsh
+pwsh -NoProfile -Command "$errors = $null; [System.Management.Automation.Language.Parser]::ParseFile('.\\src\\VolumeInventory.ps1', [ref]$null, [ref]$errors) | Out-Null; if ($errors) { $errors | ForEach-Object { $_.Message }; exit 1 }"
+```
 
 Pester tests:
 
-powershell -NoProfile -Command "Invoke-Pester -Path .\\tests -Output Detailed"
+```pwsh
+pwsh -NoProfile -Command "Invoke-Pester -Path .\\tests"
+```
 
 ## Notes
 
@@ -79,4 +99,5 @@ powershell -NoProfile -Command "Invoke-Pester -Path .\\tests -Output Detailed"
 	- `DiskX-Unallocated` -> `DX-UnAl`
 - Size is shown as `MB` (integer) or `GB` (2 decimals with decimal point).
 - Synthetic unallocated rows are included with `Part.#` shown as `-`.
+- Final ordering follows physical disk sequence by start offset, so allocated partitions and synthetic unallocated ranges are interleaved as they appear on disk.
 - `Role` highlights recognizable categories (`Reco`, `EFI`, `LinuxFS`, `LinuxSwap`).

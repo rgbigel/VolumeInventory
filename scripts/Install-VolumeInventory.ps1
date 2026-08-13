@@ -1,8 +1,15 @@
+[CmdletBinding()]
+param(
+    [string]$TargetCmdDir = "D:\OneDrive\cmd",
+    [Alias("h","?")]
+    [switch]$HelpMode
+)
+
 # File:       Install-VolumeInventory.ps1
-# Version:    2.0.0
+# Version:    2.5.0
 # Author:     Rolf
 # Created:    2026-05-27
-# Updated:    2026-05-29
+# Updated:    2026-08-13
 # Purpose:
 #   Installs VolumeInventory.ps1 into a target cmd directory.
 #
@@ -16,14 +23,9 @@
 # Outputs:
 #   Copies src\VolumeInventory.ps1 to <TargetCmdDir>\VolumeInventory.ps1.
 # Changelog:
+#   2.5.0 - Marked method-clean release pending test and aligned script header
+#           placement with Workspace_GC PowerShell lifecycle methodology.
 #   2.0.0 - Renamed installer and source target to VolumeInventory naming.
-
-[CmdletBinding()]
-param(
-    [string]$TargetCmdDir = "D:\OneDrive\cmd",
-    [Alias("h","?")]
-    [switch]$HelpMode
-)
 
 if ($HelpMode) {
     Get-Help $PSCommandPath -Full
