@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "module": "config.json",
+    "path": ".lcm/config.json",
+    "version": "1.0.0",
+    "config_type": "lcm-target-repository-config",
+    "description": "Lifecycle Model (LCM) local configuration for VolumeInventory.",
+    "authors": [
+      "Rolf"
+    ],
+    "changelog": [
+      "1.0.0 - Initial LCM Onboarding instantiation"
+    ]
+  },
+  "repository": {
+    "name": "VolumeInventory",
+    "primary_language": "PowerShell",
+    "module_root": "src",
+    "description": "Solution component: VolumeInventory",
+    "author": "Rolf",
+    "onboarded_at": "2026-08-15T23:11:48+02:00"
+  },
+  "governance": {
+    "lcm_version": "4.1.0",
+    "workspace_authority": "D:\\Git_Repositories\\Workspace_AI",
+    "immutable_links": {
+      "junctions": [
+        ".agents/rules/core",
+        ".copilot/Rules/core"
+      ],
+      "hardlinks": [
+        "AGENTS.md",
+        "GEMINI.md",
+        ".copilot/instructions.md"
+      ]
+    }
+  }
+}

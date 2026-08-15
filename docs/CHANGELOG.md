@@ -1,72 +1,21 @@
-# Changelog
+# VolumeInventory Changelog
 
-Project: VolumeInventory
-Version: 2.5.0
+Module: Changelog.md
+Purpose: Record of version changes, fixes, and enhancements for VolumeInventory.
+Path: docs/Changelog.md
+Authors: Rolf
+Version: 1.0.0
+Changelog:
+- 2026-08-15: Initial changelog created.
 
-## 2.5.0 - 2026-08-13
+---
+title: VolumeInventory Changelog
+updated: 2026-08-15
+created: 2026-08-15
+---
 
-- Added `[CmdletBinding()]` and explicit `param()` blocks to helper functions for Workspace_GC PowerShell structure conformance.
-- Added test coverage that requires helper functions to remain advanced and self-contained.
-- Aligned script, installer, test, and documentation headers for method-clean release pending test.
-
-## 2.0.2 - 2026-07-01
-
-- Final ordering now follows physical disk sequence by start offset, so allocated partitions and synthetic unallocated ranges are interleaved exactly as they appear on disk.
-
-## 2.0.1 - 2026-05-29
-
-- Device column now abbreviates synthetic values:
-	- `DiskX-PartY` -> `DX-PY`
-	- `DiskX-Unallocated` -> `DX-UnAl`
-- Filtered non-volume pseudo-device rows from `fltmc` output:
-	- `\Device\Mailslot`
-	- `\Device\Mup`
-	- `\Device\NamedPipe`
-
-## 2.0.0 - 2026-05-29
-
-- Renamed project naming to `VolumeInventory`.
-- Renamed script to `src/VolumeInventory.ps1`.
-- Renamed installer to `scripts/Install-VolumeInventory.ps1`.
-- Renamed tests to `tests/VolumeInventory.Tests.ps1`.
-- Changed default output headings:
-	- `InBCD` -> `BCD`
-	- `PartitionType` -> `Type`
-	- `Partition #` -> `Part.#`
-	- `SizeGB` -> `Size` (formatted text)
-- Device column now renders `\\Device\\HarddiskVolumeN` as `Vol N`.
-- Default output now sorts by `Disk #` then `Part.#`.
-- Added synthetic unallocated-space rows per disk with `Part.#` shown as `-`.
-- Size output now formats as integer `MB` below 1 GB, otherwise `N2` `GB`.
-
-## 1.3.0 - 2026-05-27
-
-- Added `Role` column (`Reco`, `EFI`, `LinuxFS`, `LinuxSwap`).
-- Changed default headings to compact names: `Drive`, `Device\\`, `Disk #`, `Partition #`.
-- Default table shortens device values by removing `\\Device\\` prefix.
-
-## 1.2.0 - 2026-05-27
-
-- Changed `InBCD` output to `T` (true) or blank (false).
-- Added `VolumeLabel` output column.
-- Removed `IsRecovery` output column.
-- Added deterministic Linux filesystem hints from GPT types:
-	- `LinuxFS` for `{0fc63daf-8483-4772-8e79-3d69d8477de4}`
-	- `LinuxSwap` for `{0657fd6d-a4ab-43c4-84e5-0933c84b4f4f}`
-- Fixed `VolumeLabel` parsing for blank-label rows.
-- Added synthetic rows for Linux GPT partitions that have no NT volume object (`DiskX-PartY`).
-
-## 1.1.0 - 2026-05-27
-
-- Added scripts/Install-VolumeInventory.ps1.
-- Installer copies src/VolumeInventory.ps1 to D:\OneDrive\cmd by default.
-- Installer now aborts if source-script count is not exactly one or if module dependency declarations are detected.
-- Updated README with installer usage.
-
-## 1.0.0 - 2026-05-27
-
-- Initial repository scaffold.
-- Added src/VolumeInventory.ps1.
-- Added tests/VolumeInventory.Tests.ps1.
-- Added GitHub Actions CI workflow.
-- Added README and project metadata files.
+## [1.0.0] - 2026-08-15
+### Added
+- Initial onboarding into Lifecycle Model (LCM) governance ecosystem.
+- Configured immutable core rule junctions and local override manifests.
+- Instantiated readiness validation suite.
