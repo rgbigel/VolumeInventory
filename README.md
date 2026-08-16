@@ -18,11 +18,13 @@ It resolves partition metadata for lettered and unlettered volumes (including re
 - docs/CHANGELOG.md: Project changelog
 - .github/workflows/ci.yml: GitHub Actions CI
 
-## Requirements
+## System Prerequisites
 
-- Windows
-- `pwsh` for documented commands and validation
-- Administrative shell recommended (for complete device visibility)
+- **Operating System**: Windows 10/11 x64
+- **PowerShell**: PowerShell 7 (`pwsh.exe` 7.0+)
+- **Git**: Git for Windows
+- **Filesystem**: NTFS filesystem (directory junctions & hardlinks)
+- **Privileges**: Administrator privileges required for low-level storage query APIs (`bcdedit`, `fltmc`, `Get-Partition`)
 
 ## Usage
 

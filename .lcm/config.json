@@ -21,7 +21,7 @@
     "onboarded_at": "2026-08-15T23:11:48+02:00"
   },
   "governance": {
-    "lcm_version": "4.1.0",
+    "lcm_version": "4.2.0",
     "workspace_authority": "D:\\Git_Repositories\\Workspace_AI",
     "immutable_links": {
       "junctions": [

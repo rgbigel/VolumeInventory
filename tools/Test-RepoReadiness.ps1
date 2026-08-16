@@ -24,6 +24,7 @@ if (Test-Path -LiteralPath $qualityGatesModule) {
   Assert-RepoFormatting -RepoRoot $repoRoot | Out-Host
   Assert-RepoGovernanceLinks -RepoRoot $repoRoot | Out-Host
   Assert-RepoElevationConsistency -RepoRoot $repoRoot | Out-Host
+  Assert-RepoDocumentationFabric -RepoRoot $repoRoot | Out-Host
 } else {
   Write-Warning "QualityGates module not found at: $qualityGatesModule"
 }
