@@ -75,6 +75,18 @@ if ($HelpMode) {
 
 $ErrorActionPreference = "Stop"
 
+# --- SHARED MODULES INTEGRATION ----------------------------------------------
+$sharedModulesRoot = Join-Path $PSScriptRoot "..\..\SharedModules\Modules"
+if (-not (Test-Path -LiteralPath $sharedModulesRoot)) {
+    $sharedModulesRoot = "D:\Git_Repositories\SharedModules\Modules"
+}
+
+$volumeMod = Join-Path $sharedModulesRoot "VolumeAtoms.psm1"
+$bcdMod = Join-Path $sharedModulesRoot "BcdAtoms.psm1"
+
+if (Test-Path -LiteralPath $volumeMod) { Import-Module -Name $volumeMod -Force }
+if (Test-Path -LiteralPath $bcdMod) { Import-Module -Name $bcdMod -Force }
+
 function Get-VolumeSerialHex {
     [CmdletBinding()]
     param([string]$Path)
