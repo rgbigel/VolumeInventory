@@ -30,14 +30,47 @@ function Test-IsAdmin {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
+function Test-ElevationRequired {
+    param([string]$TargetRepoRoot)
+
+    # 1. Check local .lcm/config.json
+    $lcmConfigFile = Join-Path $TargetRepoRoot '.lcm\config.json'
+    if (Test-Path $lcmConfigFile) {
+        try {
+            $cfg = Get-Content -Path $lcmConfigFile -Raw | ConvertFrom-Json
+            if ($cfg.execution_context -and ($null -ne $cfg.execution_context.elevation_required)) {
+                return [bool]$cfg.execution_context.elevation_required
+            }
+        } catch { }
+    }
+
+    # 2. Check Workspace_Inventory database cache
+    $workspaceRoot = Split-Path $TargetRepoRoot -Parent
+    $invPath = Join-Path $workspaceRoot 'Workspace_Inventory\data\inventory.json'
+    if (Test-Path $invPath) {
+        try {
+            $inv = Get-Content -Path $invPath -Raw | ConvertFrom-Json
+            $repoName = Split-Path $TargetRepoRoot -Leaf
+            $repoRecord = $inv.repositories | Where-Object { $_.RepositoryName -eq $repoName } | Select-Object -First 1
+            if ($repoRecord -and ($null -ne $repoRecord.ElevationRequired)) {
+                return [bool]$repoRecord.ElevationRequired
+            }
+        } catch { }
+    }
+
+    return $false
+}
+
 $isAdmin = Test-IsAdmin
 $repoRoot = [System.IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
+$needsElevation = Test-ElevationRequired -TargetRepoRoot $repoRoot
+
 $outDir = Split-Path $OutEvidencePath -Parent
 if (-not (Test-Path $outDir)) {
     New-Item -ItemType Directory -Path $outDir -Force | Out-Null
 }
 
-if ($isAdmin -or $ForceInProcess) {
+if ($isAdmin -or (-not $needsElevation) -or $ForceInProcess) {
     # Elevated / In-Process Execution Mode
     Write-Host "=================================================================" -ForegroundColor Cyan
     Write-Host " Running Test Suite (Context: $(if ($isAdmin) { 'Elevated (Administrator)' } else { 'Standard User' }))" -ForegroundColor Cyan
