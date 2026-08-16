@@ -34,5 +34,10 @@
         ".copilot/instructions.md"
       ]
     }
+  },
+  "execution_context": {
+    "elevation_required": true,
+    "minimum_privilege": "Administrator",
+    "reason": "Requires low-level access to bcdedit, fltmc volumes, and storage IOCTLs"
   }
 }

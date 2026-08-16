@@ -2,16 +2,17 @@
 param()
 
 # File:       VolumeInventory.Tests.ps1
-# Version:    2.5.0
+# Version:    2.6.0
 # Author:     Rolf
 # Created:    2026-05-27
-# Updated:    2026-08-13
+# Updated:    2026-08-16
 # Purpose:
-#   Validates VolumeInventory parser, parameter, and PowerShell lifecycle structure contracts.
+#   Validates VolumeInventory parser, parameter, and execution contracts.
 # Changelog:
-#   2.5.0 - Added script metadata and lifecycle structure coverage for method-clean release pending test.
+#   2.6.0 - Added live execution and contract validation tests under elevated test runner.
+#   2.5.0 - Added script metadata and lifecycle structure coverage.
 
-Describe 'VolumeInventory script' {
+Describe 'VolumeInventory script contracts' {
     It 'parses without syntax errors' {
         $scriptPath = Join-Path $PSScriptRoot '..\src\VolumeInventory.ps1'
         $errors = $null
@@ -40,5 +41,18 @@ Describe 'VolumeInventory script' {
             $function.Body.ParamBlock | Should Not Be $null
             ($function.Body.ParamBlock.Attributes.TypeName.FullName -contains 'CmdletBinding') | Should Be $true
         }
+    }
+
+    It 'executes cleanly with -PassThru and returns valid volume records' {
+        $scriptPath = Join-Path $PSScriptRoot '..\src\VolumeInventory.ps1'
+        $rows = & $scriptPath -PassThru
+        $rows | Should Not Be $null
+        @($rows).Count | Should BeGreaterThan 0
+
+        $firstRow = $rows | Select-Object -First 1
+        ($firstRow.PSObject.Properties.Name -contains 'VolumeName') | Should Be $true
+        ($firstRow.PSObject.Properties.Name -contains 'StartOffset') | Should Be $true
+        ($firstRow.PSObject.Properties.Name -contains 'Role') | Should Be $true
+        ($firstRow.PSObject.Properties.Name -contains 'DiskNumber') | Should Be $true
     }
 }

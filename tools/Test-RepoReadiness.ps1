@@ -1,13 +1,16 @@
 [CmdletBinding()]
-param()
+param(
+    [switch]$ForceInProcess
+)
 
 <#
 Module: Test-RepoReadiness.ps1
 Purpose: Run local self-readiness and LCM compliance quality checks for VolumeInventory.
 Path: tools/Test-RepoReadiness.ps1
 Authors: Rolf
-Version: 1.0.0
+Version: 1.1.0
 Changelog:
+- 2026-08-16: Added elevated test runner integration and ForceInProcess pass-through.
 - 2026-08-15: Initial readiness runner instantiated.
 #>
 
@@ -24,4 +27,14 @@ if (Test-Path -LiteralPath $qualityGatesModule) {
   Write-Warning "QualityGates module not found at: $qualityGatesModule"
 }
 
-Write-Host 'VolumeInventory readiness check: OK'
+# Run repository tests (with automated elevation handoff)
+$testsDir = Join-Path $repoRoot 'tests'
+$elevatedRunner = Join-Path $PSScriptRoot 'Invoke-ElevatedTest.ps1'
+if ((Test-Path -LiteralPath $testsDir) -and (Test-Path -LiteralPath $elevatedRunner)) {
+  Write-Host "`nExecuting test suite via Invoke-ElevatedTest..." -ForegroundColor Cyan
+  $runnerArgs = @{ TestPath = $testsDir }
+  if ($ForceInProcess) { $runnerArgs['ForceInProcess'] = $true }
+  & $elevatedRunner @runnerArgs | Out-Host
+}
+
+Write-Host "`nVolumeInventory readiness check: OK" -ForegroundColor Green

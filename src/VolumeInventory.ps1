@@ -463,6 +463,7 @@ if ($PassThru) {
                 'VolumeName',
                 'VolumeLabel',
                 'FileSystem',
+                'StartOffset',
                 'SizeBytes',
                 'PartitionType',
                 'GptType',
