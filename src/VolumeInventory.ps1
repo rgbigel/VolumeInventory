@@ -134,7 +134,8 @@ function Get-BcdReferencedNtVolumes {
     $bcdEdit = Join-Path $env:WINDIR "System32\bcdedit.exe"
     $all = & $bcdEdit /enum all /v 2>&1 | Out-String
     if ($LASTEXITCODE -ne 0) {
-        throw "bcdedit /enum all /v failed"
+        Write-Warning "bcdedit /enum all /v failed or requires administrator privileges. Continuing without BCD reference flags."
+        return @()
     }
 
     $volumes = $all -split "`r?`n" |
@@ -309,7 +310,7 @@ if (-not $IncludeShadowCopy) {
     $fltmcRows = @($fltmcRows | Where-Object { $_.VolumeName -notmatch '^\\Device\\HarddiskVolumeShadowCopy\d+$' })
 }
 
-$result = foreach ($row in $fltmcRows) {
+$result = @(foreach ($row in $fltmcRows) {
     $sizeBytes = $null
     if ($row.DosName) {
         $drive = $row.DosName.TrimEnd(':')
@@ -390,7 +391,7 @@ $result = foreach ($row in $fltmcRows) {
         PartitionNumber = $partitionNumber
         Role            = $role
     }
-}
+})
 
 $existingDiskPartKeys = @{}
 foreach ($row in $result) {
