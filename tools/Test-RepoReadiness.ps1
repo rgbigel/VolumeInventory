@@ -11,7 +11,7 @@ Authors: Rolf
 Version: 1.1.0
 Changelog:
 - 2026-08-16: Added elevated test runner integration and ForceInProcess pass-through.
-- 2026-08-15: Initial readiness runner instantiated.
+- 2026-08-16: Initial readiness runner instantiated.
 #>
 
 $repoRoot = Split-Path $PSScriptRoot -Parent
@@ -29,7 +29,7 @@ if (Test-Path -LiteralPath $qualityGatesModule) {
   Write-Warning "QualityGates module not found at: $qualityGatesModule"
 }
 
-# Run repository tests (with automated elevation handoff)
+# Run repository tests (with automated elevation handoff if required)
 $testsDir = Join-Path $repoRoot 'tests'
 $elevatedRunner = Join-Path $PSScriptRoot 'Invoke-ElevatedTest.ps1'
 if ((Test-Path -LiteralPath $testsDir) -and (Test-Path -LiteralPath $elevatedRunner)) {

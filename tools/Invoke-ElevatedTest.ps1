@@ -1,6 +1,6 @@
 <#
 Module: tools/Invoke-ElevatedTest.ps1
-Purpose: Runs VolumeInventory Pester test suites with automatic Administrator elevation handoff and structured JSON evidence generation.
+Purpose: Runs Pester test suites with automatic Administrator elevation handoff and structured JSON evidence generation.
 Path: tools/Invoke-ElevatedTest.ps1
 Authors: Rolf, Workspace_AI Engine
 Version: 1.0.0

@@ -6,12 +6,12 @@ Path: docs/Standards.md
 Authors: Rolf
 Version: 1.0.0
 Changelog:
-- 2026-08-15: Initial standards scaffolding.
+- 2026-08-16: Initial standards scaffolding.
 
 ---
 title: VolumeInventory Standards
-updated: 2026-08-15
-created: 2026-08-15
+updated: 2026-08-16
+created: 2026-08-16
 ---
 
 ## 1. Universal Formatting Invariants

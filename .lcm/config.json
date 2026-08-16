@@ -18,7 +18,7 @@
     "module_root": "src",
     "description": "Solution component: VolumeInventory",
     "author": "Rolf",
-    "onboarded_at": "2026-08-15T23:11:48+02:00"
+    "onboarded_at": "2026-08-16T17:33:47+02:00"
   },
   "governance": {
     "lcm_version": "4.2.0",
@@ -36,8 +36,8 @@
     }
   },
   "execution_context": {
-    "elevation_required": true,
-    "minimum_privilege": "Administrator",
-    "reason": "Requires low-level access to bcdedit, fltmc volumes, and storage IOCTLs"
+    "elevation_required": false,
+    "minimum_privilege": "User",
+    "reason": "Standard user execution"
   }
 }
