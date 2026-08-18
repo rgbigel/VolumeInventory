@@ -17,7 +17,7 @@ Describe 'VolumeInventory script contracts' {
         $scriptPath = Join-Path $PSScriptRoot '..\src\VolumeInventory.ps1'
         $errors = $null
         [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$null, [ref]$errors) | Out-Null
-        $errors.Count | Should Be 0
+        $errors.Count | Should -Be 0
     }
 
     It 'contains documented parameters' {
@@ -26,10 +26,10 @@ Describe 'VolumeInventory script contracts' {
         $paramBlock = $ast.ParamBlock
         $paramNames = @($paramBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
 
-        ($paramNames -contains 'IncludeShadowCopy') | Should Be $true
-        ($paramNames -contains 'OnlyBcdReferenced') | Should Be $true
-        ($paramNames -contains 'PassThru') | Should Be $true
-        ($paramNames -contains 'ExportCsvPath') | Should Be $true
+        ($paramNames -contains 'IncludeShadowCopy') | Should -Be $true
+        ($paramNames -contains 'OnlyBcdReferenced') | Should -Be $true
+        ($paramNames -contains 'PassThru') | Should -Be $true
+        ($paramNames -contains 'ExportCsvPath') | Should -Be $true
     }
 
     It 'keeps helper functions advanced and self-contained' {
@@ -38,21 +38,21 @@ Describe 'VolumeInventory script contracts' {
         $functions = $ast.FindAll({ param($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] }, $true)
 
         foreach ($function in $functions) {
-            $function.Body.ParamBlock | Should Not Be $null
-            ($function.Body.ParamBlock.Attributes.TypeName.FullName -contains 'CmdletBinding') | Should Be $true
+            $function.Body.ParamBlock | Should -Not -BeNullOrEmpty
+            ($function.Body.ParamBlock.Attributes.TypeName.FullName -contains 'CmdletBinding') | Should -Be $true
         }
     }
 
     It 'executes cleanly with -PassThru and returns valid volume records' {
         $scriptPath = Join-Path $PSScriptRoot '..\src\VolumeInventory.ps1'
         $rows = & $scriptPath -PassThru
-        $rows | Should Not Be $null
-        @($rows).Count | Should BeGreaterThan 0
+        $rows | Should -Not -BeNullOrEmpty
+        @($rows).Count | Should -BeGreaterThan 0
 
         $firstRow = $rows | Select-Object -First 1
-        ($firstRow.PSObject.Properties.Name -contains 'VolumeName') | Should Be $true
-        ($firstRow.PSObject.Properties.Name -contains 'StartOffset') | Should Be $true
-        ($firstRow.PSObject.Properties.Name -contains 'Role') | Should Be $true
-        ($firstRow.PSObject.Properties.Name -contains 'DiskNumber') | Should Be $true
+        ($firstRow.PSObject.Properties.Name -contains 'VolumeName') | Should -Be $true
+        ($firstRow.PSObject.Properties.Name -contains 'StartOffset') | Should -Be $true
+        ($firstRow.PSObject.Properties.Name -contains 'Role') | Should -Be $true
+        ($firstRow.PSObject.Properties.Name -contains 'DiskNumber') | Should -Be $true
     }
 }
