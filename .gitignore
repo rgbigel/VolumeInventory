@@ -12,3 +12,6 @@ out/
 # OS
 Thumbs.db
 Desktop.ini
+
+# LCM Local Governance Link
+.agents/
