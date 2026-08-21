@@ -75,16 +75,16 @@ if ($isAdmin -or (-not $needsElevation) -or $ForceInProcess) {
     Write-Host "=================================================================" -ForegroundColor Cyan
     Write-Host " Running Test Suite (Context: $(if ($isAdmin) { 'Elevated (Administrator)' } else { 'Standard User' }))" -ForegroundColor Cyan
     Write-Host " Repository Root: $repoRoot" -ForegroundColor Cyan
-    $p5Paths = @(
-        "C:\Users\rgbig\Documents\PowerShell\Modules\Pester\5.5.0\Pester.psd1",
-        "D:\OneDrive\Documents\PowerShell\Modules\Pester\5.5.0\Pester.psd1"
-    )
-    foreach ($p in $p5Paths) {
-        if (Test-Path $p) {
-            Import-Module $p -Force -ErrorAction SilentlyContinue
-            break
-        }
+    $userModPath = Join-Path $HOME "Documents\PowerShell\Modules"
+    if ((Test-Path -LiteralPath $userModPath) -and ($env:PSModulePath -notlike "*$userModPath*")) {
+        $env:PSModulePath = "$userModPath;$($env:PSModulePath)"
     }
+
+    $loadedPester = Get-Module Pester -ErrorAction SilentlyContinue
+    if ($loadedPester -and $loadedPester.Version.Major -lt 5) {
+        Remove-Module Pester -Force -ErrorAction SilentlyContinue
+    }
+    Import-Module Pester -MinimumVersion 5.0.0 -Force -ErrorAction SilentlyContinue
     $pesterResults = Invoke-Pester -Path $TestPath -PassThru
 
     $passed = ($pesterResults.FailedCount -eq 0)
