@@ -1,0 +1,184 @@
+[CmdletBinding()]
+param(
+    [switch]$ShowMSR,
+    [Alias('h','?')]
+    [switch]$HelpMode,
+    [Alias('t')]
+    [switch]$TraceMode,
+    [Alias('l','log')]
+    [switch]$LogMode,
+    [Alias('i')]
+    [switch]$InteractiveMode,
+    [string]$LogFile
+)
+
+<#
+    Script: DiskAssignmentStatus.ps1
+    Version: 1.0.3
+    Purpose: Show disk and partition assignment status with WinRE ownership hints.
+    Author: Rolf Bercht, Copilot
+    Caller Contract: Run elevated or allow self-elevation. Use -t for trace output, -l for file logging, -i for interactive transcript behavior, and -LogFile to choose an explicit log path.
+#>
+
+<#
+.SYNOPSIS
+    Shows disk and partition assignment status with WinRE ownership hints.
+
+.DESCRIPTION
+    Enumerates disks, partitions, and volumes, renders a fixed-width table to the terminal,
+    and writes the same output to a log file when logging is enabled.
+
+.PARAMETER ShowMSR
+    Include MSR partitions in output.
+
+.PARAMETER HelpMode
+    Show full help.
+    Aliases: h, ?
+
+.PARAMETER TraceMode
+    Enable debug trace lines.
+    Alias: t
+
+.PARAMETER LogMode
+    Enable file logging using a timestamped log file in the configured temp root.
+    Aliases: l, log
+
+.PARAMETER InteractiveMode
+    Enable interactive transcript behavior when logging is active.
+    Alias: i
+
+.PARAMETER LogFile
+    Optional explicit log file path. Specifying this parameter enables file logging automatically.
+#>
+
+if ($HelpMode) {
+    Get-Help $PSCommandPath -Full
+    exit 0
+}
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+$ScriptName = 'DiskAssignmentStatus'
+$ScriptVersion = '1.0.3'
+$EnableFileLogging = $LogMode -or $TraceMode -or -not [string]::IsNullOrWhiteSpace($LogFile)
+
+function Get-RelaunchArgumentList {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Management.Automation.InvocationInfo]$Invocation,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$BoundParameters,
+
+        [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ScriptPath
+    )
+
+    $argumentList = New-Object System.Collections.Generic.List[string]
+    $argumentList.Add('-NoExit')
+    $argumentList.Add('-ExecutionPolicy')
+    $argumentList.Add('Bypass')
+    $argumentList.Add('-File')
+    $argumentList.Add($ScriptPath)
+
+    foreach ($entry in $BoundParameters.GetEnumerator()) {
+        $argumentList.Add("-{0}" -f $entry.Key)
+        if ($entry.Value -isnot [switch] -and $entry.Value -isnot [System.Management.Automation.SwitchParameter]) {
+            foreach ($value in @($entry.Value)) {
+                if ($null -ne $value) {
+                    $argumentList.Add([string]$value)
+                }
+            }
+        }
+    }
+
+    foreach ($argument in @($Invocation.UnboundArguments)) {
+        if ($null -ne $argument) {
+            $argumentList.Add([string]$argument)
+        }
+    }
+
+    return $argumentList.ToArray()
+}
+
+$workspaceRoot = Split-Path -Path $PSScriptRoot -Parent
+$sharedModulesRoot = Join-Path (Split-Path -Path $workspaceRoot -Parent) 'SharedModules'
+
+Import-Module -Name (Join-Path $sharedModulesRoot 'Modules\PrivatePaths.psm1') -Force -ErrorAction Stop | Out-Null
+Import-Module -Name (Join-Path $sharedModulesRoot 'Modules\Logging.psm1') -Force -ErrorAction Stop | Out-Null
+
+$repoRoot = $workspaceRoot
+$sharedTempRoot = Get-PrivatePathValue -Name 'TempRoot'
+if ([string]::IsNullOrWhiteSpace($sharedTempRoot)) {
+    throw 'SharedModules PrivatePaths did not resolve TempRoot.'
+}
+
+$logRoot = if (-not [string]::IsNullOrWhiteSpace($LogFile)) { Split-Path -Path $LogFile -Parent } else { $sharedTempRoot }
+$logPrefix = if (-not [string]::IsNullOrWhiteSpace($LogFile)) { Split-Path -Path $LogFile -Leaf } else { $ScriptName }
+
+$logContext = Initialize-LogContext -ScriptName $ScriptName -ScriptVersion $ScriptVersion -EnableLogging:$EnableFileLogging -EnableTrace:$TraceMode -InteractiveMode:$InteractiveMode -RepositoryName 'DiskAssignmentStatus' -Mode 'File' -LogRoot $logRoot -LogFilePrefix $logPrefix
+if (-not [string]::IsNullOrWhiteSpace($LogFile)) {
+    $logContext.LogPath = $LogFile
+}
+
+Import-Module -Name (Join-Path $repoRoot 'Modules\Discovery\Discovery.psm1') -Force -ErrorAction Stop | Out-Null
+Import-Module -Name (Join-Path $repoRoot 'Modules\Evaluation\Evaluation.psm1') -Force -ErrorAction Stop | Out-Null
+Import-Module -Name (Join-Path $repoRoot 'Modules\Reporting\Reporting.psm1') -Force -ErrorAction Stop | Out-Null
+Import-Module -Name (Join-Path $repoRoot 'Modules\RecoveryEvaluation\RecoveryEvaluation.psm1') -Force -ErrorAction Stop | Out-Null
+Import-Module -Name (Join-Path $repoRoot 'Modules\JSONState\JSONState.psm1') -Force -ErrorAction Stop | Out-Null
+
+$banner = '=== {0} (v{1}) ===' -f $ScriptName, $ScriptVersion
+
+try {
+    Write-LogHeader -Context $logContext
+
+    Write-Output $banner
+    Write-Output ''
+    Write-Output "System Name: $env:COMPUTERNAME (generated by DiskAssignmentStatus.ps1, coded by Copilot/rgbigel)"
+    Write-Output ''
+    Write-Output 'Note on numbering of Disks and Partitions:'
+    Write-Output '      Disk numbers start at 0'
+
+    if ($ShowMSR) {
+        Write-Output ' *    Partition numbers: MSR always at 0 (shown because -ShowMSR is active)'
+        Write-LogMessage -Context $logContext -Level 'INFO' -Message ' *    Partition numbers: MSR always at 0 (shown because -ShowMSR is active)'
+    }
+    else {
+        Write-Output ' *    MSR = 0 may not be at the start of the disk, so offset may be large.'
+        Write-Output '      MSR partitions are suppressed in this view (use -ShowMSR to include them).'
+        Write-LogMessage -Context $logContext -Level 'INFO' -Message ' *    MSR = 0 may not be at the start of the disk, so offset may be large.'
+        Write-LogMessage -Context $logContext -Level 'INFO' -Message '      MSR partitions are suppressed in this view (use -ShowMSR to include them).'
+    }
+
+    Write-Output ' *    Usable partition numbers start at 1, ordered by Offset'
+    Write-LogMessage -Context $logContext -Level 'INFO' -Message ' *    Usable partition numbers start at 1, ordered by Offset'
+
+    $discoveryData = Get-DiskAssignmentDiscoveryData
+    $evaluationData = Invoke-DiskAssignmentEvaluation -DiscoveryData $discoveryData -ShowMSR:$ShowMSR
+    $recoveryEvaluation = Get-RecoveryEvaluation -DiscoveryData $discoveryData
+    $mergedEvaluation = Merge-RecoveryInference -EvaluationData $evaluationData -RecoveryEvaluationData $recoveryEvaluation
+
+    $stateModel = Build-StateModel -DiscoveryData $discoveryData -EvaluationData $evaluationData -RecoveryEvaluationData $recoveryEvaluation
+    $stateModel = Normalize-StateModel -StateModel $stateModel
+    Validate-StateSchema -StateModel $stateModel | Out-Null
+    $stateModel = Stamp-VersionMetadata -StateModel $stateModel -Version $ScriptVersion
+    $jsonContent = Serialize-ToJson -StateModel $stateModel
+    $jsonPath = Join-Path (Get-PrivatePathValue -Name 'TempRoot') "$ScriptName-StateModel.json"
+    Emit-JsonFile -Path $jsonPath -JsonContent $jsonContent
+
+    Render-DiskAssignmentReport -EvaluationData $mergedEvaluation -LogContext $logContext
+
+    Write-LogFinalStatus -Context $logContext -Code 0 -Message 'Completed successfully.'
+}
+catch {
+    Write-LogMessage -Context $logContext -Level 'ERROR' -Message $_.Exception.Message
+    Write-LogFinalStatus -Context $logContext -Code 1 -Message $_.Exception.Message
+    throw
+}
+finally {
+    Close-LogContext -Context $logContext
+}
+
