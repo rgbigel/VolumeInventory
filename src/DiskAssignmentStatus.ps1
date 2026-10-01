@@ -105,7 +105,7 @@ function Get-RelaunchArgumentList {
 }
 
 $workspaceRoot = Split-Path -Path $PSScriptRoot -Parent
-$sharedModulesRoot = Join-Path (Split-Path -Path $workspaceRoot -Parent) 'SharedModules'
+$sharedModulesRoot = Join-Path (Split-Path -Path $workspaceRoot -Parent) 'LCM_Shared'
 
 Import-Module -Name (Join-Path $sharedModulesRoot 'Modules\PrivatePaths.psm1') -Force -ErrorAction Stop | Out-Null
 Import-Module -Name (Join-Path $sharedModulesRoot 'Modules\Logging.psm1') -Force -ErrorAction Stop | Out-Null
@@ -113,7 +113,7 @@ Import-Module -Name (Join-Path $sharedModulesRoot 'Modules\Logging.psm1') -Force
 $repoRoot = $workspaceRoot
 $sharedTempRoot = Get-PrivatePathValue -Name 'TempRoot'
 if ([string]::IsNullOrWhiteSpace($sharedTempRoot)) {
-    throw 'SharedModules PrivatePaths did not resolve TempRoot.'
+    throw 'LCM_Shared PrivatePaths did not resolve TempRoot.'
 }
 
 $logRoot = if (-not [string]::IsNullOrWhiteSpace($LogFile)) { Split-Path -Path $LogFile -Parent } else { $sharedTempRoot }

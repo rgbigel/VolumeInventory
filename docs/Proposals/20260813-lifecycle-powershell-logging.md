@@ -29,18 +29,18 @@ Read-only scan under `D:/Git_Repositories` found three distinct `Logging.psm1` v
 
 | Repo or folder | Proper repo | Path | LastWriteTime | SHA256 | Observation |
 | --- | --- | --- | --- | --- | --- |
-| SharedModules | yes | `D:/Git_Repositories/SharedModules/Modules/Logging.psm1` | `20260719_164225` | `C4E619F47A86CF41575348DFD7DAA618258C47F7B0158D34B635C8E1F23E67C0` | Newest copy; exports context API and legacy `Write-Log`. |
+| LCM_Shared | yes | `D:/Git_Repositories/LCM_Shared/Modules/Logging.psm1` | `20260719_164225` | `C4E619F47A86CF41575348DFD7DAA618258C47F7B0158D34B635C8E1F23E67C0` | Newest copy; exports context API and legacy `Write-Log`. |
 | BackgroundModifier | yes | `D:/Git_Repositories/BackgroundModifier/Modules/Logging.psm1` | `20260719_164217` | `7D0A7DAB83C4D4D9247BE15309EB244B9856F66AD06E3D6F7683655421935AC1` | Local solution-specific logging copy with `Write-ContentMutationLog`. |
 | BackgroundModifier_AC | yes | `D:/Git_Repositories/BackgroundModifier_AC/Modules/Logging.psm1` | `20260719_164217` | `7D0A7DAB83C4D4D9247BE15309EB244B9856F66AD06E3D6F7683655421935AC1` | Same content as BackgroundModifier. |
 | BootOpsHub | no | `D:/Git_Repositories/BootOpsHub/SolutionCode/Modules/Logging.psm1` | `20260719_164219` | `383AF2B6CE22AC3DD1582635665014F7AA9189577365E01F99AC8E670C55AA50` | Non-proper repo copy; minimal logging helpers. |
 
-Because the explicit task scope forbids modifications outside VolumeInventory and SharedModules, no proposal files were written into BackgroundModifier or BackgroundModifier_AC. If that scope is later expanded, create target-local proposal files in those proper repos to migrate or justify their local Logging.psm1 copies.
+Because the explicit task scope forbids modifications outside VolumeInventory and LCM_Shared, no proposal files were written into BackgroundModifier or BackgroundModifier_AC. If that scope is later expanded, create target-local proposal files in those proper repos to migrate or justify their local Logging.psm1 copies.
 
 ## Preferred Logging Direction
 
-SharedModules appears to be the preferred baseline by timestamp and interface documentation. No evidence from this scan indicates that `SharedModules/Modules/Logging.psm1` is outdated.
+LCM_Shared appears to be the preferred baseline by timestamp and interface documentation. No evidence from this scan indicates that `LCM_Shared/Modules/Logging.psm1` is outdated.
 
-For repositories that need shared logging, prefer importing `D:/Git_Repositories/SharedModules/Modules/Logging.psm1` and using:
+For repositories that need shared logging, prefer importing `D:/Git_Repositories/LCM_Shared/Modules/Logging.psm1` and using:
 
 - `Initialize-LogContext`
 - `Write-LogHeader`
@@ -49,11 +49,11 @@ For repositories that need shared logging, prefer importing `D:/Git_Repositories
 - `Write-LogFinalStatus`
 - `Close-LogContext`
 
-Keep local `Write-Log` compatibility only as a temporary migration bridge. If a repository has solution-specific behavior such as content mutation audit logging, keep it in a separate repo-local module or propose promotion to SharedModules after review.
+Keep local `Write-Log` compatibility only as a temporary migration bridge. If a repository has solution-specific behavior such as content mutation audit logging, keep it in a separate repo-local module or propose promotion to LCM_Shared after review.
 
 ## Proposed Next Steps
 
 1. Accept the VolumeInventory structural conformance changes after review.
 2. Keep VolumeInventory free of a copied `Logging.psm1` unless a concrete logging requirement is introduced.
-3. Use SharedModules as the central logging baseline for future migrations.
+3. Use LCM_Shared as the central logging baseline for future migrations.
 4. When scope allows, create separate target-local proposals in BackgroundModifier and BackgroundModifier_AC for their divergent local logging modules.

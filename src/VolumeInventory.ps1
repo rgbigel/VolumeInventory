@@ -76,9 +76,9 @@ if ($HelpMode) {
 $ErrorActionPreference = "Stop"
 
 # --- SHARED MODULES INTEGRATION ----------------------------------------------
-$sharedModulesRoot = Join-Path $PSScriptRoot "..\..\SharedModules\Modules"
+$sharedModulesRoot = Join-Path $PSScriptRoot "..\..\LCM_Shared\Modules"
 if (-not (Test-Path -LiteralPath $sharedModulesRoot)) {
-    $sharedModulesRoot = "D:\Git_Repositories\SharedModules\Modules"
+    $sharedModulesRoot = "D:\Git_Repositories\LCM_Shared\Modules"
 }
 
 $volumeMod = Join-Path $sharedModulesRoot "VolumeAtoms.psm1"
