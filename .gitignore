@@ -1,6 +1,8 @@
 # PowerShell
 *.psd1
 *.psm1
+!tools/**/*.psm1
+!tools/**/*.psd1
 
 # Output
 out/
