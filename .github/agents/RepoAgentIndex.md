@@ -20,4 +20,4 @@ This repository contains the `VolumeInventory` component, developed primarily in
 ## 2. Local Scope & Operational Directives
 - **Module Root**: `src`
 - **Governance**: Follows immutable rules linked from `LCM_AI` under `.agents/rules/core/`.
-- **Local Overrides**: Documented in `.lcm/overrides.json`.
+- **Local Overrides**: Documented in `LCM_Inventory/overrides.json`.

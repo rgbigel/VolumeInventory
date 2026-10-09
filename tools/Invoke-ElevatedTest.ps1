@@ -26,7 +26,7 @@ param(
 
 if ($Help) {
     Write-Host "==========================================================================" -ForegroundColor Cyan
-    Write-Host " VolumeInventory ELEVATED TEST RUNNER (Invoke-ElevatedTest.ps1)" -ForegroundColor Cyan
+    Write-Host " LCM_Shared ELEVATED TEST RUNNER (Invoke-ElevatedTest.ps1)" -ForegroundColor Cyan
     Write-Host "==========================================================================" -ForegroundColor Cyan
     Write-Host "SYNOPSIS: Runs Pester test suites with automatic Administrator elevation handoff."
     Write-Host "USAGE:    pwsh tools/Invoke-ElevatedTest.ps1 [[-TestPath] <path>] [-ForceInProcess] [-h]"
@@ -46,15 +46,10 @@ function Test-IsAdmin {
 function Test-ElevationRequired {
     param([string]$TargetRepoRoot)
 
-    # 1. Check local .lcm/config.json
-    $lcmConfigFile = Join-Path $TargetRepoRoot '.lcm\config.json'
-    if (Test-Path $lcmConfigFile) {
-        try {
-            $cfg = Get-Content -Path $lcmConfigFile -Raw | ConvertFrom-Json
-            if ($cfg.execution_context -and ($null -ne $cfg.execution_context.elevation_required)) {
-                return [bool]$cfg.execution_context.elevation_required
-            }
-        } catch { }
+    # 1. Check the 'Elevation: Administrator' declaration in the repository AGENTS.md
+    $agentsFile = Join-Path $TargetRepoRoot 'AGENTS.md'
+    if (Test-Path $agentsFile) {
+        if ((Get-Content -Path $agentsFile -Raw) -match '(?im)^\s*Elevation:\s*Administrator\s*$') { return $true }
     }
 
     # 2. Check LCM_Inventory database cache
@@ -88,6 +83,7 @@ if ($isAdmin -or (-not $needsElevation) -or $ForceInProcess) {
     Write-Host "=================================================================" -ForegroundColor Cyan
     Write-Host " Running Test Suite (Context: $(if ($isAdmin) { 'Elevated (Administrator)' } else { 'Standard User' }))" -ForegroundColor Cyan
     Write-Host " Repository Root: $repoRoot" -ForegroundColor Cyan
+    Write-Host " Test Path      : $TestPath" -ForegroundColor Cyan
     $userModPath = Join-Path $HOME "Documents\PowerShell\Modules"
     if ((Test-Path -LiteralPath $userModPath) -and ($env:PSModulePath -notlike "*$userModPath*")) {
         $env:PSModulePath = "$userModPath;$($env:PSModulePath)"
