@@ -4,7 +4,7 @@ proposal_id: VI-20260813-lifecycle-powershell-logging
 status: pending-review
 repository: VolumeInventory
 created: 20260813_194051
-version: 2.5.0
+version: 10.0.0
 scope: VolumeInventory; read-only observations under D:/Git_Repositories
 
 ## Summary

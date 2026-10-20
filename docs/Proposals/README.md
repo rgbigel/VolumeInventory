@@ -1,6 +1,6 @@
 # Proposals
 
-Version: 2.5.0
+Version: 10.0.0
 
 Target-local Markdown proposals belong here while they are review artifacts.
 

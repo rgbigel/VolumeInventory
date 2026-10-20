@@ -1,6 +1,6 @@
 # VolumeInventory
 
-Version: 2.5.1
+Version: 10.0.0
 
 Windows volume inventory utility written in PowerShell, with documented commands run through `pwsh`, by combining:
 

@@ -1,6 +1,6 @@
 # Target-Local Method Instance
 
-Version: 2.5.0
+Version: 10.0.0
 
 This directory is the target-local Workspace_GC method instance for this repository.
 

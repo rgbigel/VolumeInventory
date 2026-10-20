@@ -1,6 +1,6 @@
 # Contributing
 
-Version: 2.5.1
+Version: 10.0.0
 
 ## Local Validation
 

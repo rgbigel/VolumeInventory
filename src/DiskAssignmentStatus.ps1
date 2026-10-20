@@ -14,7 +14,7 @@ param(
 
 <#
     Script: DiskAssignmentStatus.ps1
-    Version: 1.0.3
+    Version: 10.0.0
     Purpose: Show disk and partition assignment status with WinRE ownership hints.
     Author: Rolf Bercht, Copilot
     Caller Contract: Run elevated or allow self-elevation. Use -t for trace output, -l for file logging, -i for interactive transcript behavior, and -LogFile to choose an explicit log path.
@@ -60,7 +60,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $ScriptName = 'DiskAssignmentStatus'
-$ScriptVersion = '1.0.3'
+$ScriptVersion = '10.0.0'
 $EnableFileLogging = $LogMode -or $TraceMode -or -not [string]::IsNullOrWhiteSpace($LogFile)
 
 function Get-RelaunchArgumentList {

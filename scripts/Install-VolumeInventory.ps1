@@ -6,7 +6,7 @@ param(
 )
 
 # File:       Install-VolumeInventory.ps1
-# Version:    2.5.0
+# Version:    10.0.0
 # Author:     Rolf
 # Created:    2026-05-27
 # Updated:    2026-08-13
